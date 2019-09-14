@@ -10,9 +10,8 @@ INITIAL_TAP_THRESHOLD1 = 200
 FORMAT = pyaudio.paInt16 
 SHORT_NORMALIZE = (1.0/32768.0)
 CHANNELS = 1
-RATE = 44100  
-INPUT_BLOCK_TIME = 0.0001
-INPUT_FRAMES_PER_BLOCK = int(RATE*INPUT_BLOCK_TIME)
+RATE = 48000
+INPUT_FRAMES_PER_BLOCK = int(RATE/10)
 printed = 1000
 printed1 = 1000
 timeKonig1 = None
@@ -39,23 +38,24 @@ class TapTester(object):
 
     def open_mic_stream( self ):
 
-        stream = self.pa.open(   format = FORMAT,
-                                 channels = CHANNELS,
+        stream = self.pa.open(   format = pyaudio.paInt16,
+                                 channels = 1,
                                  rate = RATE,
                                  input = True,
-                                 input_device_index = 1,
-                                 frames_per_buffer = INPUT_FRAMES_PER_BLOCK)        
-
+                                 input_device_index = 2,
+                                 frames_per_buffer = INPUT_FRAMES_PER_BLOCK
+                                 )        
         return stream
+
     def open_mic_stream1( self ):
 
         stream1 = self.pa.open(  format = FORMAT,
-                                 channels = CHANNELS,
+                                 channels = 1,
                                  rate = RATE,
                                  input = True,
                                  input_device_index = 0,
-                                 frames_per_buffer = INPUT_FRAMES_PER_BLOCK)
-
+                                 frames_per_buffer = INPUT_FRAMES_PER_BLOCK
+                                 )
         return stream1
 
     def listen(self):
@@ -80,11 +80,11 @@ class TapTester(object):
         if detectedmic1 and detectedmic2:
             if timeKonig > timeKonig1:
                 if (timeKonig - timeKonig1).microseconds < 20000:
-                    print "1. ", (timeKonig - timeKonig1).microseconds
+                    print("1. ", (timeKonig - timeKonig1).microseconds)
             else:
                 if timeKonig < timeKonig1:
                     if (timeKonig1 - timeKonig).microseconds < 20000:
-                        print "2. ", (timeKonig1 - timeKonig).microseconds
+                        print("2. ", (timeKonig1 - timeKonig).microseconds)
             detectedmic1, detectedmic2 = False, False
 
 
