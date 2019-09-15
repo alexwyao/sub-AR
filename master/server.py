@@ -10,13 +10,13 @@ import cv2
 import sys
 import logging as log
 import datetime as dt
-from time import sleep
+import time
 
 
 app = Flask(__name__)
 
 latest_phrase = []
-
+diff = 0
 
 @app.route("/")
 def hello_world():
@@ -38,12 +38,12 @@ def getRev_ai():
     streamclient = RevAiStreamingClient(access_token, example_mc)
 
     # Opens microphone input. The input will stop after a keyboard interrupt.
-    with MicrophoneStream(rate, chunk) as stream:
+    with MicrophoneStream(rate, chunk, time.time()) as stream:
         # Uses try method to allow users to manually close the stream
         try:
             # Starts the server connection and thread sending microphone audio
             response_gen = streamclient.start(stream.generator())
-
+            
             # Iterates through responses and prints them
             for response in response_gen:
                 try:
@@ -52,6 +52,8 @@ def getRev_ai():
                         print([a["value"]
                                for a in elements])
                         global latest_phrase
+                        global diff 
+                        diff = stream.a_diff
                         values = [a["value"] for a in elements]
                         if '<unk>' in values:
                             values.remove('<unk>')
@@ -75,7 +77,7 @@ def webcam():
     while True:
         if not video_capture.isOpened():
             print('Unable to load camera.')
-            sleep(5)
+            time.sleep(5)
             pass
 
         # Capture frame-by-frame
@@ -92,17 +94,19 @@ def webcam():
 
         # Put subtitles below faces
         for (x, y, w, h) in faces:
-            global latest_phrase
-            if len(latest_phrase):
-                display_txt = ' '.join(latest_phrase)
-                (text_width, text_height) = cv2.getTextSize(display_txt,
-                    cv2.FONT_HERSHEY_SIMPLEX, fontScale=1.0, thickness=2)[0]
+            global diff
+            if (diff < 0 and x < 200) or (diff > 0 and x  200):
+                global latest_phrase
+                if len(latest_phrase):
+                    display_txt = ' '.join(latest_phrase)
+                    (text_width, text_height) = cv2.getTextSize(display_txt,
+                        cv2.FONT_HERSHEY_SIMPLEX, fontScale=1.0, thickness=2)[0]
 
-                box_coords = ((x - 1,y+h + 5), (x + text_width + 1, y+h - text_height - 5))
-                cv2.rectangle(frame, box_coords[0], box_coords[1], (0,0,0), cv2.FILLED)
+                    box_coords = ((x - 1,y+h + 5), (x + text_width + 1, y+h - text_height - 5))
+                    cv2.rectangle(frame, box_coords[0], box_coords[1], (0,0,0), cv2.FILLED)
 
-                cv2.putText(frame, display_txt, (x, y+h),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+                    cv2.putText(frame, display_txt, (x, y+h),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
 
         if anterior != len(faces):
             anterior=len(faces)
