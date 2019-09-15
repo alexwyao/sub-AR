@@ -5,12 +5,12 @@ import datetime
 import time
 import audioop
 
-INITIAL_TAP_THRESHOLD = 200
-INITIAL_TAP_THRESHOLD1 = 200
-FORMAT = pyaudio.paInt16 
+INITIAL_TAP_THRESHOLD = 20
+INITIAL_TAP_THRESHOLD1 = 20
+FORMAT = pyaudio.paInt16
 SHORT_NORMALIZE = (1.0/32768.0)
 CHANNELS = 1
-RATE = 48000
+RATE = 44100
 INPUT_FRAMES_PER_BLOCK = int(RATE/10)
 printed = 1000
 printed1 = 1000
@@ -42,9 +42,9 @@ class TapTester(object):
                                  channels = 1,
                                  rate = RATE,
                                  input = True,
-                                 input_device_index = 2,
+                                 input_device_index = 1,
                                  frames_per_buffer = INPUT_FRAMES_PER_BLOCK
-                                 )        
+                                 )
         return stream
 
     def open_mic_stream1( self ):
@@ -63,31 +63,8 @@ class TapTester(object):
         amplitude = get_rms( block )
         block1 = self.stream1.read(INPUT_FRAMES_PER_BLOCK, exception_on_overflow = False)
         amplitude1 = get_rms( block1 )
-        global printed
-        if amplitude > self.tap_threshold and printed < i:
-            global timeKonig
-            timeKonig = datetime.datetime.now()
-            global detectedmic1
-            detectedmic1 = True
-            printed = i + 1000           
-        global printed1
-        if amplitude1 > self.tap_threshold1 and printed1 < i:
-            global timeKonig1
-            timeKonig1 = datetime.datetime.now()
-            global detectedmic2
-            detectedmic2 = True
-            printed1 = i + 1000           
-        if detectedmic1 and detectedmic2:
-            if timeKonig > timeKonig1:
-                if (timeKonig - timeKonig1).microseconds < 20000:
-                    print("1. ", (timeKonig - timeKonig1).microseconds)
-            else:
-                if timeKonig < timeKonig1:
-                    if (timeKonig1 - timeKonig).microseconds < 20000:
-                        print("2. ", (timeKonig1 - timeKonig).microseconds)
-            detectedmic1, detectedmic2 = False, False
-
-
+        print(amplitude,amplitude1,amplitude-amplitude1)
+        time.sleep(.2)
 
 if __name__ == "__main__":
     tt = TapTester()
