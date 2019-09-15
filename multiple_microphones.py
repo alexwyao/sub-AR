@@ -5,6 +5,7 @@ import datetime
 import time
 import audioop
 
+<<<<<<< HEAD
 INITIAL_TAP_THRESHOLD = 20
 INITIAL_TAP_THRESHOLD1 = 20
 FORMAT = pyaudio.paInt16
@@ -12,6 +13,15 @@ SHORT_NORMALIZE = (1.0/32768.0)
 CHANNELS = 1
 RATE = 44100
 INPUT_FRAMES_PER_BLOCK = int(RATE/10)
+=======
+INITIAL_TAP_THRESHOLD = 1500
+INITIAL_TAP_THRESHOLD1 = 1500
+FORMAT = pyaudio.paInt16 
+SHORT_NORMALIZE = (1.0/32768.0)
+CHANNELS = 1
+RATE = 44100
+INPUT_FRAMES_PER_BLOCK = 4410
+>>>>>>> 15daf69d36f8c7483a2fa1e6ce2ffe185e97e731
 printed = 1000
 printed1 = 1000
 timeKonig1 = None
@@ -40,21 +50,27 @@ class TapTester(object):
 
         stream = self.pa.open(   format = pyaudio.paInt16,
                                  channels = 1,
-                                 rate = RATE,
+                                 rate = 44100,
                                  input = True,
+<<<<<<< HEAD
                                  input_device_index = 1,
                                  frames_per_buffer = INPUT_FRAMES_PER_BLOCK
                                  )
+=======
+                                 input_device_index = 0,
+                                 frames_per_buffer = 4410
+                                 )        
+>>>>>>> 15daf69d36f8c7483a2fa1e6ce2ffe185e97e731
         return stream
 
     def open_mic_stream1( self ):
 
         stream1 = self.pa.open(  format = FORMAT,
                                  channels = 1,
-                                 rate = RATE,
+                                 rate = 48000,
                                  input = True,
-                                 input_device_index = 0,
-                                 frames_per_buffer = INPUT_FRAMES_PER_BLOCK
+                                 input_device_index = 2,
+                                 frames_per_buffer = 4800
                                  )
         return stream1
 
