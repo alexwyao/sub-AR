@@ -52,11 +52,10 @@ def getRev_ai():
                         print([a["value"]
                                for a in elements])
                         global latest_phrase
-                        if elements[0]["value"] == "<unk>" or elements[0]["value"] == "i":
-                            latest_phrase = []
-                        else:
-                            latest_phrase = [a["value"]
-                                         for a in elements]
+                        values = [a["value"] for a in elements] 
+                        if '<unk>' in values:
+                            values.remove('<unk>')
+                        latest_phrase = values
                 except:
                     print(response)
 
