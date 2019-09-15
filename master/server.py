@@ -13,15 +13,14 @@ import datetime as dt
 from time import sleep
 
 
-
 app = Flask(__name__)
 
 latest_phrase = []
 
+
 @app.route("/")
 def hello_world():
     return ' '.join(latest_phrase)
-
 
 
 def getRev_ai():
@@ -49,9 +48,15 @@ def getRev_ai():
             for response in response_gen:
                 try:
                     if json.loads(response)["type"] != 'final':
-                        print( [a["value"] for a in json.loads(response)["elements"]])
+                        elements = json.loads(response)["elements"]
+                        print([a["value"]
+                               for a in elements])
                         global latest_phrase
-                        latest_phrase = [a["value"] for a in json.loads(response)["elements"]]
+                        if elements[0]["value"] == "<unk>" or elements[0]["value"] == "i":
+                            latest_phrase = []
+                        else:
+                            latest_phrase = [a["value"]
+                                         for a in elements]
                 except:
                     print(response)
 
@@ -63,7 +68,7 @@ def getRev_ai():
 def webcam():
     cascPath = "haarcascade_frontalface_default.xml"
     faceCascade = cv2.CascadeClassifier(cascPath)
-    log.basicConfig(filename='webcam.log',level=log.INFO)
+    log.basicConfig(filename='webcam.log', level=log.INFO)
 
     video_capture = cv2.VideoCapture(0)
     anterior = 0
@@ -81,27 +86,23 @@ def webcam():
 
         faces = faceCascade.detectMultiScale(
             gray,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            minSize=(100, 100)
+            scaleFactor = 1.1,
+            minNeighbors = 5,
+            minSize = (100, 100)
         )
 
-        # Draw a rectangle around the faces
+        # Put subtitles below faces
         for (x, y, w, h) in faces:
-            #cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-            #cv2.putText(frame, "bob", Point(x, y), FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0,255,0), 2.0);
-            # global latest_phrase
             global latest_phrase
-            cv2.putText(frame, ' '.join(latest_phrase), (x, y), cv2.FONT_HERSHEY_PLAIN, 1.0, (0,255,0), 2)
+            cv2.putText(frame, ' '.join(latest_phrase), (x, y+h),
+                        cv2.FONT_HERSHEY_PLAIN, 1.0, (0, 255, 0), 2)
 
         if anterior != len(faces):
-            anterior = len(faces)
+            anterior=len(faces)
             log.info("faces: "+str(len(faces))+" at "+str(dt.datetime.now()))
-
 
         # Display the resulting frame
         cv2.imshow('Video', frame)
-
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -115,9 +116,9 @@ def webcam():
 
 if __name__ == "__main__":  
     # app.run(debug=True)
-    t1 = threading.Thread(target=app.run, args=())
-    t2 = threading.Thread(target=getRev_ai, args=())
-    t3 = threading.Thread(target=webcam, args=())
+    t1=threading.Thread(target = app.run, args = ())
+    t2=threading.Thread(target = getRev_ai, args = ())
+    t3=threading.Thread(target = webcam, args = ())
     t1.start()
     t2.start()
     t3.start()
