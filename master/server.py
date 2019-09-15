@@ -96,23 +96,31 @@ def webcam():
         for (x, y, w, h) in faces:
             global diff
             if (diff < 0 and x < 200) or (diff > 0 and x  200):
+                y += 35
                 global latest_phrase
+                fontscale = 0.65
                 if len(latest_phrase):
-                    display_txt = ' '.join(latest_phrase)
-                    (text_width, text_height) = cv2.getTextSize(display_txt,
-                        cv2.FONT_HERSHEY_SIMPLEX, fontScale=1.0, thickness=2)[0]
+                    for i in range(0, len(latest_phrase), 6):
+                        display_txt = ' '.join(latest_phrase[i:i+5])
+                        (text_width, text_height) = cv2.getTextSize(display_txt,
+                            cv2.FONT_HERSHEY_SIMPLEX, fontScale=fontscale, thickness=1)[0]
 
-                    box_coords = ((x - 1,y+h + 5), (x + text_width + 1, y+h - text_height - 5))
-                    cv2.rectangle(frame, box_coords[0], box_coords[1], (0,0,0), cv2.FILLED)
+                        box_coords = ((x - 1,y+h + 5), (x + text_width + 1, y+h - text_height - 5))
+                        cv2.rectangle(frame, box_coords[0], box_coords[1], (0,0,0), cv2.FILLED)
 
-                    cv2.putText(frame, display_txt, (x, y+h),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+                        cv2.putText(frame, display_txt, (x, y+h),
+                                    cv2.FONT_HERSHEY_SIMPLEX, fontscale, (255, 255, 255), 1)
+
+                        y += text_height + 10
 
         if anterior != len(faces):
             anterior=len(faces)
             log.info("faces: "+str(len(faces))+" at "+str(dt.datetime.now()))
 
         # Display the resulting frame
+
+        cv2.namedWindow('Video', cv2.WND_PROP_FULLSCREEN)
+        cv2.setWindowProperty('Video', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         cv2.imshow('Video', frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
