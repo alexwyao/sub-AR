@@ -60,9 +60,6 @@ def getRev_ai():
             streamclient.client.send("EOS")
             pass
 
-
-
-
 def webcam():
     cascPath = "haarcascade_frontalface_default.xml"
     faceCascade = cv2.CascadeClassifier(cascPath)
@@ -115,9 +112,6 @@ def webcam():
     # When everything is done, release the capture
     video_capture.release()
     cv2.destroyAllWindows()
-
-
-
 
 if __name__ == "__main__":  
     # app.run(debug=True)
