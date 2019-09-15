@@ -3,6 +3,10 @@ import pyaudio
 from rev_ai.models import MediaConfig
 from rev_ai.streamingclient import RevAiStreamingClient
 from six.moves import queue
+from threading import Lock
+import time
+from collections import deque
+from numpy import median
 
 import audioop
 
@@ -13,7 +17,7 @@ def get_rms( block ):
 
 class MicrophoneStream(object):
     """Opens a recording stream as a generator yielding the audio chunks."""
-    def __init__(self, rate, chunk):
+    def __init__(self, rate, chunk, start_time):
         self._rate = rate
         self._chunk = chunk
         # Create a thread-safe buffer of audio data
@@ -22,6 +26,14 @@ class MicrophoneStream(object):
         self.closed = True
 
         self.a_left = self.a_right = self.a_diff = 0
+
+        self.timed_rms = deque()
+        self.rms_lock = Lock()
+
+        self.start_time = start_time
+
+        self.delta_t1 = 0.5
+        self.delta_t2 = 0.2
 
     def __enter__(self):
         self._audio_interface = pyaudio.PyAudio()
@@ -46,7 +58,7 @@ class MicrophoneStream(object):
             # This is necessary so that the input device's buffer doesn't
             # overflow while the calling thread makes network requests, etc.
             stream_callback=self._fill_buffer1,
-            input_device_index=1,
+            input_device_index=2,
         )
 
         self.closed = False
@@ -74,6 +86,25 @@ class MicrophoneStream(object):
         """Continuously collect data from the audio stream, into the buffer."""
         self._buff1.put(in_data)
         return None, pyaudio.paContinue
+
+    def get_timed_rms(self, end_time):
+        print(self.timed_rms)
+        rms_values = []
+        with self.rms_lock:
+            while len(self.timed_rms) > 1:
+                t, left, right = self.timed_rms.popleft()
+                if (end_time - start_time) - self.delta_t1 < t <= (end_time - start_time) - self.delta_t2:
+                    # print("appending")
+                    rms_values.append(left - right)
+                elif t > (end_time - start_time) - self.delta_t2:
+                    if rms_values:
+                        return median(rms_values)
+                    else:
+                        return
+            # default case
+            if self.timed_rms:
+                t, left, right = self.timed_rms.popleft()
+                return left - right
 
     def generator(self):
         while not self.closed:
@@ -104,6 +135,9 @@ class MicrophoneStream(object):
             amplitude = get_rms( block )
             amplitude1 = get_rms( block1 )
             self.a_diff = amplitude - amplitude1
+
+            with self.rms_lock:
+                self.timed_rms.append((time.time() - self.start_time, amplitude, amplitude1))
             # print(amplitude,amplitude1,amplitude - amplitude1)
 
             yield block
@@ -121,8 +155,10 @@ example_mc = MediaConfig('audio/x-raw', 'interleaved', 44100, 'S16LE', 1)
 
 streamclient = RevAiStreamingClient(access_token, example_mc)
 
+start_time = time.time()
+
 # Opens microphone input. The input will stop after a keyboard interrupt.
-with MicrophoneStream(rate, chunk) as stream:
+with MicrophoneStream(rate, chunk, start_time) as stream:
     # Uses try method to allow users to manually close the stream
     try:
         # Starts the server connection and thread sending microphone audio
@@ -130,11 +166,14 @@ with MicrophoneStream(rate, chunk) as stream:
 
         # Iterates through responses and prints them
         for response in response_gen:
-            try:
+            if json.loads(response)["type"] == "partial":
+                curr_time = time.time()
+                print(curr_time - start_time)
+
                 print( [a["value"] for a in json.loads(response)["elements"]])
-                print( stream.a_diff)
-            except:
-                print("NOOOO")
+                # print( stream.a_diff)
+                # print(json.loads(response))
+                print(stream.get_timed_rms(curr_time))
 
     except KeyboardInterrupt:
         # Ends the websocket connection.
