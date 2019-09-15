@@ -31,9 +31,9 @@ while True:
 
     # Draw a rectangle around the faces
     for (x, y, w, h) in faces:
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        #cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         #cv2.putText(frame, "bob", Point(x, y), FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0,255,0), 2.0);
-
+        cv2.putText(frame, "human", (x, y), cv2.FONT_HERSHEY_PLAIN, 1.0, (0,255,0), 2);
 
     if anterior != len(faces):
         anterior = len(faces)
