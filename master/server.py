@@ -52,7 +52,7 @@ def getRev_ai():
                         print([a["value"]
                                for a in elements])
                         global latest_phrase
-                        values = [a["value"] for a in elements] 
+                        values = [a["value"] for a in elements]
                         if '<unk>' in values:
                             values.remove('<unk>')
                         latest_phrase = values
@@ -93,8 +93,15 @@ def webcam():
         # Put subtitles below faces
         for (x, y, w, h) in faces:
             global latest_phrase
-            cv2.putText(frame, ' '.join(latest_phrase), (x, y+h),
-                        cv2.FONT_HERSHEY_PLAIN, 1.0, (0, 255, 0), 2)
+            display_txt = ' '.join(latest_phrase)
+            (text_width, text_height) = cv2.getTextSize(display_txt,
+                cv2.FONT_HERSHEY_SIMPLEX, fontScale=1.0, thickness=2)[0]
+
+            box_coords = ((x - 1,y+h + 5), (x + text_width + 1, y+h - text_height - 5))
+            cv2.rectangle(frame, box_coords[0], box_coords[1], (0,0,0), cv2.FILLED)
+
+            cv2.putText(frame, display_txt, (x, y+h),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
 
         if anterior != len(faces):
             anterior=len(faces)
@@ -113,7 +120,7 @@ def webcam():
     video_capture.release()
     cv2.destroyAllWindows()
 
-if __name__ == "__main__":  
+if __name__ == "__main__":
     # app.run(debug=True)
     t1=threading.Thread(target = app.run, args = ())
     t2=threading.Thread(target = getRev_ai, args = ())
