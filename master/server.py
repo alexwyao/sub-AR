@@ -93,15 +93,16 @@ def webcam():
         # Put subtitles below faces
         for (x, y, w, h) in faces:
             global latest_phrase
-            display_txt = ' '.join(latest_phrase)
-            (text_width, text_height) = cv2.getTextSize(display_txt,
-                cv2.FONT_HERSHEY_SIMPLEX, fontScale=1.0, thickness=2)[0]
+            if len(latest_phrase):
+                display_txt = ' '.join(latest_phrase)
+                (text_width, text_height) = cv2.getTextSize(display_txt,
+                    cv2.FONT_HERSHEY_SIMPLEX, fontScale=1.0, thickness=2)[0]
 
-            box_coords = ((x - 1,y+h + 5), (x + text_width + 1, y+h - text_height - 5))
-            cv2.rectangle(frame, box_coords[0], box_coords[1], (0,0,0), cv2.FILLED)
+                box_coords = ((x - 1,y+h + 5), (x + text_width + 1, y+h - text_height - 5))
+                cv2.rectangle(frame, box_coords[0], box_coords[1], (0,0,0), cv2.FILLED)
 
-            cv2.putText(frame, display_txt, (x, y+h),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+                cv2.putText(frame, display_txt, (x, y+h),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
 
         if anterior != len(faces):
             anterior=len(faces)
