@@ -4,19 +4,21 @@ import pyaudio
 from rev_ai.models import MediaConfig
 from rev_ai.streamingclient import RevAiStreamingClient
 from six.moves import queue
+import threading
+from MicrophoneStream import MicrophoneStream
 
 app = Flask(__name__)
 
-
+latest_phrase = []
 
 @app.route("/")
 def hello_world():
-    message = "Hello, World"
-    return message
+    return ' '.join(latest_phrase)
 
 
 
 def getRev_ai():
+    print('get rev ai started')
     # Sampling rate of your microphone and desired chunk size
     rate = 44100
     chunk = int(rate/10)
@@ -40,6 +42,8 @@ def getRev_ai():
             for response in response_gen:
                 try:
                     print( [a["value"] for a in json.loads(response)["elements"]])
+                    global latest_phrase
+                    latest_phrase = [a["value"] for a in json.loads(response)["elements"]]
                 except:
                     print(response)
 
@@ -49,11 +53,9 @@ def getRev_ai():
             pass
 
 
-
-
-
-
 if __name__ == "__main__":  
-    app.run(debug=True)
-    print('hello')
-    getRev_ai()
+    # app.run(debug=True)
+    t1 = threading.Thread(target=app.run, args=())
+    t2 = threading.Thread(target=getRev_ai, args=())
+    t1.start()
+    t2.start()
