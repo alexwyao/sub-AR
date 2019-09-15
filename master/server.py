@@ -12,7 +12,6 @@ import logging as log
 import datetime as dt
 import time
 
-
 app = Flask(__name__)
 
 latest_phrase = []
@@ -26,7 +25,7 @@ def hello_world():
 def getRev_ai():
     print('get rev ai started')
     # Sampling rate of your microphone and desired chunk size
-    rate = 44100
+    rate = 48000
     chunk = int(rate/10)
 
     # Insert your access token here
@@ -95,7 +94,7 @@ def webcam():
         # Put subtitles below faces
         for (x, y, w, h) in faces:
             global diff
-            if (diff < 0 and x < 200) or (diff > 0 and x  200):
+            if (diff < 0 and x < 200) or (diff > 0 and x > 200):
                 y += 35
                 global latest_phrase
                 fontscale = 0.65

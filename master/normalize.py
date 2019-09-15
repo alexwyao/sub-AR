@@ -1,32 +1,22 @@
-"""Copyright 2019 Google, Modified by REV 2019
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
 import json
 import pyaudio
 from rev_ai.models import MediaConfig
 from rev_ai.streamingclient import RevAiStreamingClient
 from six.moves import queue
 from threading import Lock
-from collections import deque
-import audioop
 import time
+from collections import deque
+from numpy import median
 
-NORMAL0=1400
-NORMAL1=800
+import audioop
+
+
+mic_values = []
+mic1_values = []
 
 def get_rms( block ):
     return audioop.rms(block, 2)
+
 
 class MicrophoneStream(object):
     """Opens a recording stream as a generator yielding the audio chunks."""
@@ -145,12 +135,52 @@ class MicrophoneStream(object):
 
             block = b''.join(data)
             block1 = b''.join(data1)
-            amplitude = get_rms( block ) / NORMAL0
-            amplitude1 = get_rms( block1 ) / NORMAL1
+            amplitude = get_rms( block )
+            amplitude1 = get_rms( block1 )
             self.a_diff = amplitude - amplitude1
+
+            mic_values.append(amplitude)
+            mic1_values.append(amplitude1)
 
             with self.rms_lock:
                 self.timed_rms.append((time.time() - self.start_time, amplitude, amplitude1))
             # print(amplitude,amplitude1,amplitude - amplitude1)
 
             yield block
+
+
+# Sampling rate of your microphone and desired chunk size
+rate = 48000
+chunk = int(rate/10)
+
+# Insert your access token here
+access_token = "02KT6QPJ8XPl0HTqTglpdvZeohnNwaUldCBPJOP_QKTu5JtUsNfUXIC-O_oniEwmpw3QxPjTfEKjVCX33xfwWkai9ypo0"
+
+# Creates a media config with the settings set for a raw microphone input
+example_mc = MediaConfig('audio/x-raw', 'interleaved', 48000, 'S16LE', 1)
+
+streamclient = RevAiStreamingClient(access_token, example_mc)
+
+start_time = time.time()
+
+# Opens microphone input. The input will stop after a keyboard interrupt.
+with MicrophoneStream(rate, chunk, start_time) as stream:
+    # Uses try method to allow users to manually close the stream
+    try:
+        # Starts the server connection and thread sending microphone audio
+        response_gen = streamclient.start(stream.generator())
+
+        # Iterates through responses and prints them
+        for response in response_gen:
+            pass
+
+    except KeyboardInterrupt:
+        # Ends the websocket connection.
+        streamclient.client.send("EOS")
+
+        import numpy as np
+        print("mean: {}  std: {}", np.mean(mic_values), np.std(mic_values))
+
+        print("mean: {}  std: {}", np.mean(mic1_values), np.std(mic1_values))
+        print()
+        pass
